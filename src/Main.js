@@ -1,140 +1,102 @@
-// Get the canvas element
-const canvas = document.getElementById('snake-canvas');
-const ctx = canvas.getContext('2d');
-canvas.width = 400;
-canvas.height = 400;
+const canvas = document.getElementById("snake-canvas");
+const ctx = canvas.getContext("2d");
+const gameOverScreen = document.getElementById("game-over-screen");
+const resetButton = document.getElementById("reset-button");
 
-
-
-// Game state variables
-let snake = [{ x: 10, y: 10 }];
-let food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
-let direction = 'right';
+const box = 20;
+let snake = [{ x: 9 * box, y: 10 * box }];
+let direction = "RIGHT";
+let food = {
+    x: Math.floor(Math.random() * 19) * box,
+    y: Math.floor(Math.random() * 19) * box,
+};
 let score = 0;
-let gameOver = false;
+let gameInterval;
 
-// Player controls
-document.addEventListener('keydown', (e) => {
-    switch (e.key) {
-        case 'ArrowUp':
-            if (direction !== 'down') direction = 'up';
-            break;
-        case 'ArrowDown':
-            if (direction !== 'up') direction = 'down';
-            break;
-        case 'ArrowLeft':
-            if (direction !== 'right') direction = 'left';
-            break;
-        case 'ArrowRight':
-            if (direction !== 'left') direction = 'right';
-            break;
-        case 'r':
-            reset();
-            break;
+function drawGame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw food
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    // Draw snake
+    for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "green" : "lightgreen";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
     }
-});
 
-window.setInterval(gameLoop, 100);
-// Game loop
-function gameLoop() {
-    if (!gameOver) {
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Move snake
+    let headX = snake[0].x;
+    let headY = snake[0].y;
 
-        // Update the snake
-        updateSnake();
+    if (direction === "LEFT") headX -= box;
+    if (direction === "UP") headY -= box;
+    if (direction === "RIGHT") headX += box;
+    if (direction === "DOWN") headY += box;
 
-        // Draw the game elements
-        drawSnake();
-        drawFood();
-        drawScore();
-
-        // Request the next frame
-        // requestAnimationFrame(gameLoop);
-    } else {
-        // Game over screen
-        drawGameOverScreen();
-    }
-}
-
-function updateSnake() {
-    // Move the snake
-    const head = { ...snake[0] };
-    switch (direction) {
-        case 'up':
-            head.y -= 10;
-            break;
-        case 'down':
-            head.y += 10;
-            break;
-        case 'left':
-            head.x -= 10;
-            break;
-        case 'right':
-            head.x += 10;
-            break;
-    }
-    snake.unshift(head);
-
-    // Check for collision with food
-    if (head.x === food.x && head.y === food.y) {
+    if (headX === food.x && headY === food.y) {
         score++;
-        food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
+        food = {
+            x: Math.floor(Math.random() * 19) * box,
+            y: Math.floor(Math.random() * 19) * box,
+        };
     } else {
         snake.pop();
     }
 
-    // Check for collision with walls or snake body
+    let newHead = { x: headX, y: headY };
+
+    // Check game over conditions
     if (
-        head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height ||
-        snake.slice(1).some((segment) => segment.x === head.x && segment.y === head.y)
+        headX < 0 || headX >= canvas.width ||
+        headY < 0 || headY >= canvas.height ||
+        isCollision(newHead, snake)
     ) {
-        gameOver = true;
+        clearInterval(gameInterval);
+        gameOverScreen.style.display = "block";
+        resetButton.style.display = "block";
+        return;
+    }
+
+    snake.unshift(newHead);
+}
+
+function isCollision(head, snake) {
+    for (let i = 0; i < snake.length; i++) {
+        if (head.x === snake[i].x && head.y === snake[i].y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function changeDirection(event) {
+    if (event.key === "ArrowLeft" && direction !== "RIGHT") {
+        direction = "LEFT";
+    } else if (event.key === "ArrowUp" && direction !== "DOWN") {
+        direction = "UP";
+    } else if (event.key === "ArrowRight" && direction !== "LEFT") {
+        direction = "RIGHT";
+    } else if (event.key === "ArrowDown" && direction !== "UP") {
+        direction = "DOWN";
     }
 }
 
-function drawSnake() {
-    ctx.fillStyle = 'green';
-    snake.forEach((segment) => {
-        ctx.fillRect(segment.x, segment.y, 10, 10);
-    });
-}
-
-function drawFood() {
-    ctx.fillStyle = 'red';
-    ctx.fillRect(food.x, food.y, 10, 10);
-}
-
-function drawScore() {
-    ctx.font = '24px Arial';
-    ctx.fillStyle = 'white';
-    ctx.fillText(`Score: ${score}`, 10, 30);
-}
-
-function drawGameOverScreen() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.font = '36px Arial';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 50);
-
-    ctx.font = '24px Arial';
-    ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-
-    // Create the Restart button
-
-    const restartButtonY = canvas.height / 2 + 50;
-    ctx.fillText('Press the button to restart', canvas.width / 2, restartButtonY - 20);
-}
-
-function reset() {
-    snake = [{ x: 10, y: 10 }];
-    food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
-    direction = 'right';
+function resetGame() {
+    snake = [{ x: 9 * box, y: 10 * box }];
+    direction = "RIGHT";
+    food = {
+        x: Math.floor(Math.random() * 19) * box,
+        y: Math.floor(Math.random() * 19) * box,
+    };
     score = 0;
-    gameOver = false;
+    gameOverScreen.style.display = "none";
+    resetButton.style.display = "none";
+    gameInterval = setInterval(drawGame, 100);
 }
 
-// gameLoop();
+document.addEventListener("keydown", changeDirection);
+resetButton.addEventListener("click", resetGame);
+
+// Start the game
+resetGame();

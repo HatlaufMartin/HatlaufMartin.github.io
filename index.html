@@ -6,33 +6,31 @@
     <title>A Simple Platformer</title>
 
     <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #333;
-            font-family: Arial, sans-serif;
+        #snake-canvas {
+            border: 2px solid black;
         }
 
-        canvas {
-            border: 1px solid white;
+        #game-over-screen {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
         }
 
-        .restart-button {
-            font-size: 18px;
+        #reset-button {
+            display: none;
+            margin-top: 10px;
             padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-<canvas id="snake-canvas"></canvas>
+<canvas id="snake-canvas" width="400" height="400"></canvas>
+<div id="game-over-screen">
+    <h2>Game Over</h2>
+</div>
+<button id="reset-button">Reset Game</button>
+
 <script src="src/Main.js"></script>
 </body>
 </html>
