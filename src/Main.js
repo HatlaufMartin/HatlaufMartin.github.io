@@ -4,6 +4,8 @@ const ctx = canvas.getContext('2d');
 canvas.width = 400;
 canvas.height = 400;
 
+
+
 // Game state variables
 let snake = [{ x: 10, y: 10 }];
 let food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
