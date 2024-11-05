@@ -10,11 +10,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 600px;
-            width: 400px;
+            height: 100vh;
             margin: 0;
-            background-color: #87CEEB;
+            background-color: #333;
             font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 1px solid white;
         }
 
         .restart-button {
@@ -29,6 +32,7 @@
     </style>
 </head>
 <body>
+<canvas id="snake-canvas"></canvas>
 <script src="src/Main.js"></script>
 </body>
 </html>

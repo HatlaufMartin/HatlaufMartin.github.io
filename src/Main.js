@@ -1,101 +1,106 @@
-// Set up the game canvas
-const canvas = document.createElement('canvas');
-canvas.width = 400;
-canvas.height = 600;
-document.body.appendChild(canvas);
+// Get the canvas element
+const canvas = document.getElementById('snake-canvas');
 const ctx = canvas.getContext('2d');
+canvas.width = 400;
+canvas.height = 400;
 
 // Game state variables
-let bird = { x: 50, y: canvas.height / 2, radius: 20 };
-let pipes = [];
-let gameOver = false;
+let snake = [{ x: 10, y: 10 }];
+let food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
+let direction = 'right';
 let score = 0;
+let gameOver = false;
 
 // Player controls
 document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && !gameOver) {
-        bird.velocity = -10;
+    switch (e.key) {
+        case 'ArrowUp':
+            if (direction !== 'down') direction = 'up';
+            break;
+        case 'ArrowDown':
+            if (direction !== 'up') direction = 'down';
+            break;
+        case 'ArrowLeft':
+            if (direction !== 'right') direction = 'left';
+            break;
+        case 'ArrowRight':
+            if (direction !== 'left') direction = 'right';
+            break;
+        case 'r':
+            reset();
+            break;
     }
 });
 
+window.setInterval(gameLoop, 100);
 // Game loop
 function gameLoop() {
-    // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     if (!gameOver) {
-        // Update bird position
-        bird.y += bird.velocity;
-        bird.velocity += 1;
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Update pipes
-        updatePipes();
+        // Update the snake
+        updateSnake();
 
-        // Check for collisions
-        checkCollisions();
-
-        // Draw game elements
-        drawBird();
-        drawPipes();
+        // Draw the game elements
+        drawSnake();
+        drawFood();
         drawScore();
 
-        // Request next frame
-        requestAnimationFrame(gameLoop);
+        // Request the next frame
+        // requestAnimationFrame(gameLoop);
     } else {
         // Game over screen
         drawGameOverScreen();
     }
 }
 
-function updatePipes() {
-    // Add new pipes
-    if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 100) {
-        const pipeGap = 150;
-        const pipeHeight = Math.floor(Math.random() * (canvas.height - pipeGap - 100)) + 50;
-        pipes.push({ x: canvas.width, y: 0, width: 50, height: pipeHeight });
-        pipes.push({ x: canvas.width, y: pipeHeight + pipeGap, width: 50, height: canvas.height - pipeHeight - pipeGap });
+function updateSnake() {
+    // Move the snake
+    const head = { ...snake[0] };
+    switch (direction) {
+        case 'up':
+            head.y -= 10;
+            break;
+        case 'down':
+            head.y += 10;
+            break;
+        case 'left':
+            head.x -= 10;
+            break;
+        case 'right':
+            head.x += 10;
+            break;
+    }
+    snake.unshift(head);
+
+    // Check for collision with food
+    if (head.x === food.x && head.y === food.y) {
+        score++;
+        food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
+    } else {
+        snake.pop();
     }
 
-    // Move pipes
-    pipes.forEach((pipe) => {
-        pipe.x -= 3;
-    });
-
-    // Remove offscreen pipes
-    pipes = pipes.filter((pipe) => pipe.x + pipe.width >= 0);
-}
-
-function checkCollisions() {
-    // Check for collision with pipes
-    for (const pipe of pipes) {
-        if (
-            bird.x + bird.radius > pipe.x &&
-            bird.x - bird.radius < pipe.x + pipe.width &&
-            (bird.y - bird.radius < pipe.y || bird.y + bird.radius > pipe.y + pipe.height)
-        ) {
-            gameOver = true;
-            return;
-        }
-    }
-
-    // Check for collision with ground or ceiling
-    if (bird.y - bird.radius < 0 || bird.y + bird.radius > canvas.height) {
+    // Check for collision with walls or snake body
+    if (
+        head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height ||
+        snake.slice(1).some((segment) => segment.x === head.x && segment.y === head.y)
+    ) {
         gameOver = true;
     }
 }
 
-function drawBird() {
-    ctx.beginPath();
-    ctx.arc(bird.x, bird.y, bird.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = 'yellow';
-    ctx.fill();
+function drawSnake() {
+    ctx.fillStyle = 'green';
+    snake.forEach((segment) => {
+        ctx.fillRect(segment.x, segment.y, 10, 10);
+    });
 }
 
-function drawPipes() {
-    ctx.fillStyle = 'green';
-    for (const pipe of pipes) {
-        ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
-    }
+function drawFood() {
+    ctx.fillStyle = 'red';
+    ctx.fillRect(food.x, food.y, 10, 10);
 }
 
 function drawScore() {
@@ -116,24 +121,18 @@ function drawGameOverScreen() {
     ctx.font = '24px Arial';
     ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
 
-    const restartButton = document.createElement('button');
-    restartButton.textContent = 'Restart';
-    restartButton.classList.add('restart-button');
-    restartButton.addEventListener('click', () => {
-        reset();
-        gameLoop();
-    });
+    // Create the Restart button
 
     const restartButtonY = canvas.height / 2 + 50;
     ctx.fillText('Press the button to restart', canvas.width / 2, restartButtonY - 20);
-    ctx.drawImage(restartButton, canvas.width / 2 - 50, restartButtonY, 100, 50);
 }
 
 function reset() {
-    bird = { x: 50, y: canvas.height / 2, radius: 20 };
-    pipes = [];
-    gameOver = false;
+    snake = [{ x: 10, y: 10 }];
+    food = { x: Math.floor(Math.random() * 40) * 10, y: Math.floor(Math.random() * 40) * 10 };
+    direction = 'right';
     score = 0;
+    gameOver = false;
 }
 
-gameLoop();
+// gameLoop();
